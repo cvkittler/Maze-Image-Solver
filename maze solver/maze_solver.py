@@ -2,9 +2,10 @@ import argparse, os
 import numpy as np
 from PIL import Image
 import cv2 as cv2
-from aStarOptimized import aStar, aStarWithImage
+from aStarOptimized import aStar
 
 args = None
+debug=0
 
 def main():
     parser = argparse.ArgumentParser(description="Solves images of mazes")
@@ -36,7 +37,7 @@ def main():
     image = expandWalls(image,1)
     # image = scaleImage(image,50) 
     start,end = getStartEnd(image)
-    runAStar(image,start,end)
+    image = runAStar(image,start,end)
 
 def expand_black_area(image, iderations):
     #TODO: Multithread this it's slow
@@ -76,10 +77,11 @@ def getImage():
 def makeGrayImage(image):
     global args
     im_gray = image.convert('L')
-    if (args.debug >= 1):
-        print("Making gray scale image")
-    if (args.debug >= 2):
-        saveTempImage("MONOCHROME",im_gray)
+    if args:
+        if (args.debug >= 1):
+            print("Making gray scale image")
+        if (args.debug >= 2):
+            saveTempImage("MONOCHROME",im_gray)
     return im_gray
 
 def binarizeImage(image):
@@ -88,10 +90,11 @@ def binarizeImage(image):
     maxval = 255
     thresh = 128
     im_bin = (image > thresh) * maxval
-    if (args.debug >= 1):
-        print("Binarizing image with threshold of " + str(thresh))
-    if (args.debug >= 2):
-        saveTempImage("BINARIZED",im_bin)
+    if args:
+        if (args.debug >= 1):
+            print("Binarizing image with threshold of " + str(thresh))
+        if (args.debug >= 2):
+            saveTempImage("BINARIZED",im_bin)
     return im_bin
 
 def cropImage(image):
@@ -111,16 +114,16 @@ def cropImage(image):
         right_padding -= 1
     
     image = image[left_padding:right_padding, top_padding:bottom_padding]
-
-    if (args.debug >= 1):
-        print(f"Cropping image of binarized maze image staring size is [{x}, {y}]" )
-        print(f"\tCrop amount from edge")
-        print(f"\tTop    crop: {top_padding}")
-        print(f"\tBottom crop: {y - bottom_padding}")
-        print(f"\tLeft   crop: {left_padding}")
-        print(f"\tRight  crop: {x - right_padding}")
-    if (args.debug >= 2):
-        saveTempImage("CROPPED",image)
+    if args:
+        if (args.debug >= 1):
+            print(f"Cropping image of binarized maze image staring size is [{x}, {y}]" )
+            print(f"\tCrop amount from edge")
+            print(f"\tTop    crop: {top_padding}")
+            print(f"\tBottom crop: {y - bottom_padding}")
+            print(f"\tLeft   crop: {left_padding}")
+            print(f"\tRight  crop: {x - right_padding}")
+        if (args.debug >= 2):
+            saveTempImage("CROPPED",image)
     return image
 
 def expandWalls(image,amount):
@@ -193,13 +196,11 @@ def getStartEnd(image):
 def runAStar(image,start,end):
     start = [start[1],start[0]]
     end = [end[1],end[0]]
-    # start = (210,44)
-    # end = (210,46)
-    print(f"Map Size {np.shape(image)}")
     path, visited = aStar(image,start,end)
-    for node in path:
+    for node in visited:
         image[node[0]][node[1]] =100
-    # print(solved)
+    for node in path:
+        image[node[0]][node[1]] =50
     return image
 
 if __name__ == '__main__':
